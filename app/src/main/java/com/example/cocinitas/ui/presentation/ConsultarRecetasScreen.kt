@@ -15,12 +15,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.cocinitas.data.Ingrediente
 import com.example.cocinitas.data.Receta
 import com.example.cocinitas.data.TipoComida
+import com.example.cocinitas.data.formatearMedida
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,22 +34,23 @@ fun ConsultarRecetasScreen(
 
     Scaffold(
         modifier = modifier,
+        containerColor = Color.Transparent, // 1. Fondo del listado transparente
         topBar = {
             TopAppBar(
-                title = { Text("Recetas Guardadas (${recetas.size})") },
+                title = { Text("Recetas Guardadas (${recetas.size})", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.cargarRecetas() }) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = "Recargar")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent // 2. Barra de título transparente
+                )
             )
         }
     ) { innerPadding ->
@@ -189,16 +191,5 @@ fun RecetaItemCard(receta: Receta) {
                 }
             }
         }
-    }
-}
-
-// Auxiliar para mostrar únicamente la medida que contenga el ingrediente
-private fun formatearMedida(ingrediente: Ingrediente): String {
-    val m = ingrediente.medidas
-    return when {
-        m.volumenMl != null -> "${m.volumenMl} mL"
-        m.masaGramos != null -> "${m.masaGramos} g"
-        m.cantidad != null -> "${m.cantidad} uds"
-        else -> "Al gusto"
     }
 }

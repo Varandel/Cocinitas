@@ -13,20 +13,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.cocinitas.data.Ingrediente
 import com.example.cocinitas.data.MedidaIngrediente
 import com.example.cocinitas.data.TipoComida
-import androidx.compose.ui.unit.sp
+import com.example.cocinitas.data.formatearMedida
+import com.example.cocinitas.data.UnidadMedida
 
-enum class UnidadMedida(val label: String) {
-    VOLUMEN("Volumen (en mL)"),
-    MASA("Masa (en gramos)"),
-    CANTIDAD("Cantidad")
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,29 +35,34 @@ fun CrearRecetaScreen(
 ) {
     val context = LocalContext.current
 
-    // Campos principales
     var nombreReceta by remember { mutableStateOf("") }
     var tipoComidaSeleccionado by remember { mutableStateOf(TipoComida.Comida) }
 
-    // Tipos de alimentos / Categorías
     var textoTipoAlimento by remember { mutableStateOf("") }
     val tiposAlimentos = remember { mutableStateListOf<String>() }
 
-    // Ingredientes dinámicos
     var nombreIngrediente by remember { mutableStateOf("") }
     var valorMedida by remember { mutableStateOf("") }
     var unidadSeleccionada by remember { mutableStateOf(UnidadMedida.MASA) }
     val listaIngredientes = remember { mutableStateListOf<Ingrediente>() }
 
-    // Pasos de receta ordenados
     var textoPaso by remember { mutableStateOf("") }
     val listaPasos = remember { mutableStateListOf<String>() }
 
+    // Estilo reutilizable para fundir los OutlinedTextField con el fondo
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.25f),
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+    )
+
     Scaffold(
         modifier = modifier,
+        containerColor = Color.Transparent, // 1. Evita que Scaffold pinte fondo blanco
         topBar = {
             TopAppBar(
-                title = { Text("Nueva Receta") },
+                title = { Text("Nueva Receta", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(
@@ -67,7 +70,10 @@ fun CrearRecetaScreen(
                             contentDescription = "Volver"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent // 2. Barra superior transparente
+                )
             )
         }
     ) { innerPadding ->
@@ -85,11 +91,12 @@ fun CrearRecetaScreen(
                 onValueChange = { nombreReceta = it },
                 label = { Text("Nombre de la receta") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                colors = textFieldColors
             )
 
             // 2. Selector Tipo de Comida
-            Text("Momento de comida:", fontWeight = FontWeight.Bold)
+            Text("Momento de comida:", fontWeight = FontWeight.SemiBold)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 FilterChip(
                     selected = tipoComidaSeleccionado == TipoComida.Comida,
@@ -103,10 +110,10 @@ fun CrearRecetaScreen(
                 )
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-            // 3. Tipos de alimentos (Categorías)
-            Text("Categorías / Tipo de Alimento:", fontWeight = FontWeight.Bold)
+            // 3. Categorías
+            Text("Categorías / Tipo de Alimento:", fontWeight = FontWeight.SemiBold)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -114,9 +121,10 @@ fun CrearRecetaScreen(
                 OutlinedTextField(
                     value = textoTipoAlimento,
                     onValueChange = { textoTipoAlimento = it },
-                    label = { Text("Ej: Carnes, Lácteos, Pasta...") },
+                    label = { Text("Ej: Carnes, Pasta...") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
@@ -130,31 +138,40 @@ fun CrearRecetaScreen(
                     Icon(Icons.Default.Add, contentDescription = "Añadir Categoría")
                 }
             }
-            // Chips de categorías agregadas
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                tiposAlimentos.forEach { tipo ->
-                    InputChip(
-                        selected = true,
-                        onClick = { tiposAlimentos.remove(tipo) },
-                        label = { Text(tipo) },
-                        trailingIcon = { Icon(Icons.Default.Delete, contentDescription = "Eliminar", modifier = Modifier.size(16.dp)) }
-                    )
+
+            if (tiposAlimentos.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    tiposAlimentos.forEach { tipo ->
+                        InputChip(
+                            selected = true,
+                            onClick = { tiposAlimentos.remove(tipo) },
+                            label = { Text(tipo) },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Eliminar",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        )
+                    }
                 }
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
             // 4. Ingredientes
-            Text("Ingredientes:", fontWeight = FontWeight.Bold)
+            Text("Ingredientes:", fontWeight = FontWeight.SemiBold)
             OutlinedTextField(
                 value = nombreIngrediente,
                 onValueChange = { nombreIngrediente = it },
                 label = { Text("Nombre del ingrediente") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                colors = textFieldColors
             )
 
             Row(
@@ -165,13 +182,13 @@ fun CrearRecetaScreen(
                 OutlinedTextField(
                     value = valorMedida,
                     onValueChange = { valorMedida = it },
-                    label = { Text("Cantidad numérica") },
+                    label = { Text("Cantidad") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors
                 )
 
-                // Selector de unidad
                 Column(modifier = Modifier.weight(1.2f)) {
                     UnidadMedida.entries.forEach { unidad ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -205,10 +222,9 @@ fun CrearRecetaScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Añadir Ingrediente a la lista")
+                Text("Añadir Ingrediente")
             }
 
-            // Lista de ingredientes añadidos
             listaIngredientes.forEachIndexed { index, item ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -222,10 +238,10 @@ fun CrearRecetaScreen(
                 }
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-            // 5. Pasos de la receta (ordenados)
-            Text("Pasos de la receta (en orden):", fontWeight = FontWeight.Bold)
+            // 5. Pasos
+            Text("Pasos de preparación:", fontWeight = FontWeight.SemiBold)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -234,7 +250,8 @@ fun CrearRecetaScreen(
                     value = textoPaso,
                     onValueChange = { textoPaso = it },
                     label = { Text("Escribe el siguiente paso") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = textFieldColors
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
@@ -264,7 +281,7 @@ fun CrearRecetaScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 6. Botón de Guardado Final
+            // 6. Guardar
             Button(
                 onClick = {
                     if (nombreReceta.isBlank()) {
@@ -297,21 +314,10 @@ fun CrearRecetaScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    .padding(bottom = 32.dp)
             ) {
                 Text("Guardar Receta en JSON", fontSize = 16.sp)
             }
         }
-    }
-}
-
-private fun formatearMedida(ingrediente: Ingrediente): String {
-    val m = ingrediente.medidas
-    return when {
-        m.volumenMl != null -> "${m.volumenMl} mL"
-        m.masaGramos != null -> "${m.masaGramos} g"
-        m.cantidad != null -> "${m.cantidad} uds"
-        else -> "Al gusto"
     }
 }

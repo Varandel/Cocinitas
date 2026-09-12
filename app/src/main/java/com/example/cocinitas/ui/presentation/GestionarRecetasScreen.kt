@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,24 +30,29 @@ fun GestionarRecetasScreen(
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    /**
+     * Este metodo hace posible el eliminar o editar los campos de una receta ya creada previamente,
+     * dependiendo de los parámetros que se proporcionen.
+     */
     val context = LocalContext.current
     val recetas by viewModel.recetas.collectAsState()
-
-    // Controla qué receta se va a eliminar en el diálogo de confirmación
     var recetaParaEliminar by remember { mutableStateOf<Receta?>(null) }
-
     val titulo = if (modo == ModoGestion.MODIFICAR) "Modificar Receta" else "Eliminar Receta"
 
     Scaffold(
         modifier = modifier,
+        containerColor = Color.Transparent, // 1. Fondo transparente
         topBar = {
             TopAppBar(
-                title = { Text(titulo) },
+                title = { Text(titulo, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent // 2. Barra de título transparente
+                )
             )
         }
     ) { innerPadding ->

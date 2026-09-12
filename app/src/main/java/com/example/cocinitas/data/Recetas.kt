@@ -31,3 +31,20 @@ data class Receta(
     @SerialName("Ingredientes") val ingredientes: List<Ingrediente>,
     @SerialName("Tipo Comida") val tipoComida: TipoComida
 )
+
+
+enum class UnidadMedida(val label: String) {
+    VOLUMEN("Volumen (en mL)"),
+    MASA("Masa (en gramos)"),
+    CANTIDAD("Cantidad")
+}
+
+fun formatearMedida(ingrediente: Ingrediente): String {
+    val m = ingrediente.medidas
+    return when {
+        m.volumenMl != null -> "${m.volumenMl} mL"
+        m.masaGramos != null -> "${m.masaGramos} g"
+        m.cantidad != null -> "${m.cantidad} uds"
+        else -> "Al gusto"
+    }
+}

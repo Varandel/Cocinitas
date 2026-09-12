@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,6 +23,8 @@ import com.example.cocinitas.data.Ingrediente
 import com.example.cocinitas.data.MedidaIngrediente
 import com.example.cocinitas.data.Receta
 import com.example.cocinitas.data.TipoComida
+import com.example.cocinitas.data.formatearMedida
+import com.example.cocinitas.data.UnidadMedida
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,7 +36,6 @@ fun ModificarRecetaScreen(
 ) {
     val context = LocalContext.current
 
-    // Inicializamos el formulario con los datos que ya tenía la receta
     var nombreReceta by remember { mutableStateOf(recetaOriginal.nombre) }
     var tipoComidaSeleccionado by remember { mutableStateOf(recetaOriginal.tipoComida) }
 
@@ -48,16 +50,28 @@ fun ModificarRecetaScreen(
     var textoPaso by remember { mutableStateOf("") }
     val listaPasos = remember { mutableStateListOf<String>().apply { addAll(recetaOriginal.pasosReceta) } }
 
+    // Estilo reutilizable para fundir los OutlinedTextField
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.25f),
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+    )
+
     Scaffold(
         modifier = modifier,
+        containerColor = Color.Transparent, // Evita fondo blanco
         topBar = {
             TopAppBar(
-                title = { Text("Modificar Receta #${recetaOriginal.idReceta}") },
+                title = { Text("Modificar Receta #${recetaOriginal.idReceta}", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent // Barra superior transparente
+                )
             )
         }
     ) { innerPadding ->
@@ -74,7 +88,8 @@ fun ModificarRecetaScreen(
                 onValueChange = { nombreReceta = it },
                 label = { Text("Nombre de la receta") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                colors = textFieldColors
             )
 
             Text("Momento de comida:", fontWeight = FontWeight.Bold)
@@ -91,7 +106,7 @@ fun ModificarRecetaScreen(
                 )
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
             Text("Categorías / Tipo de Alimento:", fontWeight = FontWeight.Bold)
             Row(
@@ -103,17 +118,16 @@ fun ModificarRecetaScreen(
                     onValueChange = { textoTipoAlimento = it },
                     label = { Text("Añadir categoría...") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = {
-                        if (textoTipoAlimento.isNotBlank()) {
-                            tiposAlimentos.add(textoTipoAlimento.trim())
-                            textoTipoAlimento = ""
-                        }
+                IconButton(onClick = {
+                    if (textoTipoAlimento.isNotBlank()) {
+                        tiposAlimentos.add(textoTipoAlimento.trim())
+                        textoTipoAlimento = ""
                     }
-                ) {
+                }) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir")
                 }
             }
@@ -131,7 +145,7 @@ fun ModificarRecetaScreen(
                 }
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
             Text("Ingredientes:", fontWeight = FontWeight.Bold)
             OutlinedTextField(
@@ -139,7 +153,8 @@ fun ModificarRecetaScreen(
                 onValueChange = { nombreIngrediente = it },
                 label = { Text("Nombre del ingrediente") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                colors = textFieldColors
             )
 
             Row(
@@ -153,7 +168,8 @@ fun ModificarRecetaScreen(
                     label = { Text("Cantidad numérica") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors
                 )
 
                 Column(modifier = Modifier.weight(1.2f)) {
@@ -205,7 +221,7 @@ fun ModificarRecetaScreen(
                 }
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
             Text("Pasos de la receta:", fontWeight = FontWeight.Bold)
             Row(
@@ -216,17 +232,16 @@ fun ModificarRecetaScreen(
                     value = textoPaso,
                     onValueChange = { textoPaso = it },
                     label = { Text("Escribe un paso") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = textFieldColors
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = {
-                        if (textoPaso.isNotBlank()) {
-                            listaPasos.add(textoPaso.trim())
-                            textoPaso = ""
-                        }
+                IconButton(onClick = {
+                    if (textoPaso.isNotBlank()) {
+                        listaPasos.add(textoPaso.trim())
+                        textoPaso = ""
                     }
-                ) {
+                }) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir")
                 }
             }
@@ -248,18 +263,10 @@ fun ModificarRecetaScreen(
 
             Button(
                 onClick = {
-                    if (nombreReceta.isBlank()) {
-                        Toast.makeText(context, "El nombre es obligatorio", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    if (listaIngredientes.isEmpty()) {
-                        Toast.makeText(context, "Añade al menos un ingrediente", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    if (listaPasos.isEmpty()) {
-                        Toast.makeText(context, "Añade al menos un paso", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
+                    // ... (Validaciones y guardado originales)
+                    if (nombreReceta.isBlank()) { Toast.makeText(context, "El nombre es obligatorio", Toast.LENGTH_SHORT).show(); return@Button }
+                    if (listaIngredientes.isEmpty()) { Toast.makeText(context, "Añade al menos un ingrediente", Toast.LENGTH_SHORT).show(); return@Button }
+                    if (listaPasos.isEmpty()) { Toast.makeText(context, "Añade al menos un paso", Toast.LENGTH_SHORT).show(); return@Button }
 
                     val recetaActualizada = recetaOriginal.copy(
                         nombre = nombreReceta.trim(),
@@ -277,23 +284,11 @@ fun ModificarRecetaScreen(
                         Toast.makeText(context, "Error al actualizar la receta", Toast.LENGTH_LONG).show()
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 32.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Text("Guardar Cambios", fontSize = 16.sp)
             }
         }
-    }
-}
-
-private fun formatearMedida(ingrediente: Ingrediente): String {
-    val m = ingrediente.medidas
-    return when {
-        m.volumenMl != null -> "${m.volumenMl} mL"
-        m.masaGramos != null -> "${m.masaGramos} g"
-        m.cantidad != null -> "${m.cantidad} uds"
-        else -> "Al gusto"
     }
 }
