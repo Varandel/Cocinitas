@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Esta línea permite compartir los archivos que DownloadManager guardó en la carpeta Download privada de tu app -->
+    <external-files-path name="my_downloads" path="Download/" />
+</paths>

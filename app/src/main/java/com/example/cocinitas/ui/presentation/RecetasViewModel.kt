@@ -7,7 +7,6 @@ import com.example.cocinitas.data.TipoComida
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -70,6 +69,7 @@ class RecetasViewModel : ViewModel() {
         )
 
         return try {
+            // TODO: CAMBIAR NOMBRAMIENTO DE RECETA PARA QUE SE HAGA CON SU NOMBRE, NO CON SU ID
             val archivo = File(dir, "receta_${nuevaReceta.idReceta}.json")
             archivo.writeText(jsonConfig.encodeToString(nuevaReceta))
             _recetas.value = (_recetas.value + nuevaReceta).sortedBy { it.idReceta }
