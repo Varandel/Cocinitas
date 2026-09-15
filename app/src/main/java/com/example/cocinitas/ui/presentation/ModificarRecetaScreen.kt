@@ -1,6 +1,7 @@
 package com.example.cocinitas.ui.presentation
 
 import android.widget.Toast
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -9,11 +10,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -37,7 +40,7 @@ fun ModificarRecetaScreen(
     val context = LocalContext.current
 
     var nombreReceta by remember { mutableStateOf(recetaOriginal.nombre) }
-    var tipoComidaSeleccionado by remember { mutableStateOf(recetaOriginal.tipoComida) }
+    val tiposComidaSeleccionados = remember { mutableStateListOf<TipoComida>().apply { addAll(recetaOriginal.tiposComida) } }
 
     var textoTipoAlimento by remember { mutableStateOf("") }
     val tiposAlimentos = remember { mutableStateListOf<String>().apply { addAll(recetaOriginal.tipoAlimentos) } }
@@ -50,7 +53,6 @@ fun ModificarRecetaScreen(
     var textoPaso by remember { mutableStateOf("") }
     val listaPasos = remember { mutableStateListOf<String>().apply { addAll(recetaOriginal.pasosReceta) } }
 
-    // Estilo reutilizable para fundir los OutlinedTextField
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
         unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.25f),
@@ -60,18 +62,16 @@ fun ModificarRecetaScreen(
 
     Scaffold(
         modifier = modifier,
-        containerColor = Color.Transparent, // Evita fondo blanco
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Modificar Receta #${recetaOriginal.idReceta}", fontWeight = FontWeight.Bold) },
+                title = { Text("Modificando '${recetaOriginal.nombre}'", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent // Barra superior transparente
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { innerPadding ->
@@ -92,16 +92,22 @@ fun ModificarRecetaScreen(
                 colors = textFieldColors
             )
 
-            Text("Momento de comida:", fontWeight = FontWeight.Bold)
+            Text("Momento de comida (múltiple):", fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 FilterChip(
-                    selected = tipoComidaSeleccionado == TipoComida.Comida,
-                    onClick = { tipoComidaSeleccionado = TipoComida.Comida },
+                    selected = tiposComidaSeleccionados.contains(TipoComida.Comida),
+                    onClick = {
+                        if (tiposComidaSeleccionados.contains(TipoComida.Comida)) tiposComidaSeleccionados.remove(TipoComida.Comida)
+                        else tiposComidaSeleccionados.add(TipoComida.Comida)
+                    },
                     label = { Text("Comida") }
                 )
                 FilterChip(
-                    selected = tipoComidaSeleccionado == TipoComida.Cena,
-                    onClick = { tipoComidaSeleccionado = TipoComida.Cena },
+                    selected = tiposComidaSeleccionados.contains(TipoComida.Cena),
+                    onClick = {
+                        if (tiposComidaSeleccionados.contains(TipoComida.Cena)) tiposComidaSeleccionados.remove(TipoComida.Cena)
+                        else tiposComidaSeleccionados.add(TipoComida.Cena)
+                    },
                     label = { Text("Cena") }
                 )
             }
@@ -162,22 +168,33 @@ fun ModificarRecetaScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = valorMedida,
-                    onValueChange = { valorMedida = it },
-                    label = { Text("Cantidad numérica") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = textFieldColors
-                )
+                if (unidadSeleccionada == UnidadMedida.OTRO) {
+                    OutlinedTextField(
+                        value = valorMedida,
+                        onValueChange = { valorMedida = it },
+                        label = { Text("Descríbelo libremente") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = textFieldColors
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = valorMedida,
+                        onValueChange = { valorMedida = it },
+                        label = { Text("Cantidad") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = textFieldColors
+                    )
+                }
 
                 Column(modifier = Modifier.weight(1.2f)) {
                     UnidadMedida.entries.forEach { unidad ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(
                                 selected = unidadSeleccionada == unidad,
-                                onClick = { unidadSeleccionada = unidad }
+                                onClick = { unidadSeleccionada = unidad; valorMedida = "" }
                             )
                             Text(unidad.name, style = MaterialTheme.typography.bodySmall)
                         }
@@ -187,18 +204,23 @@ fun ModificarRecetaScreen(
 
             Button(
                 onClick = {
-                    val valor = valorMedida.toDoubleOrNull()
-                    if (nombreIngrediente.isNotBlank() && valor != null) {
+                    if (nombreIngrediente.isNotBlank() && valorMedida.isNotBlank()) {
                         val medida = when (unidadSeleccionada) {
-                            UnidadMedida.VOLUMEN -> MedidaIngrediente(volumenMl = valor)
-                            UnidadMedida.MASA -> MedidaIngrediente(masaGramos = valor)
-                            UnidadMedida.CANTIDAD -> MedidaIngrediente(cantidad = valor)
+                            UnidadMedida.VOLUMEN -> MedidaIngrediente(volumenMl = valorMedida.toDoubleOrNull())
+                            UnidadMedida.MASA -> MedidaIngrediente(masaGramos = valorMedida.toDoubleOrNull())
+                            UnidadMedida.CANTIDAD -> MedidaIngrediente(cantidad = valorMedida.toIntOrNull())
+                            UnidadMedida.OTRO -> MedidaIngrediente(textoLibre = valorMedida.trim())
                         }
-                        listaIngredientes.add(Ingrediente(nombreIngrediente.trim(), medida))
-                        nombreIngrediente = ""
-                        valorMedida = ""
+
+                        if (unidadSeleccionada != UnidadMedida.OTRO && medida.volumenMl == null && medida.masaGramos == null && medida.cantidad == null) {
+                            Toast.makeText(context, "El valor debe ser numérico/entero.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            listaIngredientes.add(Ingrediente(nombreIngrediente.trim(), medida))
+                            nombreIngrediente = ""
+                            valorMedida = ""
+                        }
                     } else {
-                        Toast.makeText(context, "Indica un nombre y valor numérico", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Indica un nombre y valor", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -247,13 +269,44 @@ fun ModificarRecetaScreen(
             }
 
             listaPasos.forEachIndexed { index, paso ->
+                var dragOffset by remember { mutableStateOf(0f) }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Reordenar arrastrando",
+                        modifier = Modifier
+                            .pointerInput(paso) { // Localizar el elemento específico
+                                detectDragGestures(
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        dragOffset += dragAmount.y
+                                        val actualIdx = listaPasos.indexOf(paso)
+                                        if (actualIdx != -1) {
+                                            if (dragOffset > 50f && actualIdx < listaPasos.lastIndex) {
+                                                val temp = listaPasos[actualIdx]
+                                                listaPasos[actualIdx] = listaPasos[actualIdx + 1]
+                                                listaPasos[actualIdx + 1] = temp
+                                                dragOffset -= 50f
+                                            } else if (dragOffset < -50f && actualIdx > 0) {
+                                                val temp = listaPasos[actualIdx]
+                                                listaPasos[actualIdx] = listaPasos[actualIdx - 1]
+                                                listaPasos[actualIdx - 1] = temp
+                                                dragOffset += 50f
+                                            }
+                                        }
+                                    },
+                                    onDragEnd = { dragOffset = 0f },
+                                    onDragCancel = { dragOffset = 0f }
+                                )
+                            }
+                            .padding(end = 12.dp)
+                    )
                     Text("${index + 1}. $paso", modifier = Modifier.weight(1f))
-                    IconButton(onClick = { listaPasos.removeAt(index) }) {
+                    IconButton(onClick = { listaPasos.remove(paso) }) {
                         Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
                     }
                 }
@@ -263,8 +316,8 @@ fun ModificarRecetaScreen(
 
             Button(
                 onClick = {
-                    // ... (Validaciones y guardado originales)
                     if (nombreReceta.isBlank()) { Toast.makeText(context, "El nombre es obligatorio", Toast.LENGTH_SHORT).show(); return@Button }
+                    if (tiposComidaSeleccionados.isEmpty()) { Toast.makeText(context, "Selecciona al menos un momento de comida", Toast.LENGTH_SHORT).show(); return@Button }
                     if (listaIngredientes.isEmpty()) { Toast.makeText(context, "Añade al menos un ingrediente", Toast.LENGTH_SHORT).show(); return@Button }
                     if (listaPasos.isEmpty()) { Toast.makeText(context, "Añade al menos un paso", Toast.LENGTH_SHORT).show(); return@Button }
 
@@ -273,15 +326,15 @@ fun ModificarRecetaScreen(
                         tipoAlimentos = tiposAlimentos.toList(),
                         pasosReceta = listaPasos.toList(),
                         ingredientes = listaIngredientes.toList(),
-                        tipoComida = tipoComidaSeleccionado
+                        tiposComida = tiposComidaSeleccionados.toList()
                     )
 
-                    val exito = viewModel.modificarReceta(recetaActualizada)
+                    val exito = viewModel.modificarReceta(recetaOriginal.nombre, recetaActualizada)
                     if (exito) {
-                        Toast.makeText(context, "Receta #${recetaOriginal.idReceta} actualizada", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Receta '${recetaOriginal.nombre}' actualizada", Toast.LENGTH_SHORT).show()
                         onVolver()
                     } else {
-                        Toast.makeText(context, "Error al actualizar la receta", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Error al actualizar (¿El nuevo nombre ya existe?)", Toast.LENGTH_LONG).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),

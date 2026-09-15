@@ -60,11 +60,11 @@ class MainActivity : ComponentActivity() {
         viewModel.configurarDirectorioYCargar(carpetaPublica)
 
         // ¡Aquí lanzamos la comprobación de actualizaciones de forma silenciosa!
-        comprobarActualizaciones("ivanjimeneztajuelo", "Cocinitas")
+        comprobarActualizaciones("Varandel", "Cocinitas")
 
         // EJEMPLO DE USO:
         // Llama a esta función cuando detectes que hay una nueva versión (ej. tras leer un JSON)
-        // o asociala a un botón en tu UI de Compose.
+        // o asociarla a un botón en tu UI de Compose.
         // descargarYActualizarApk("https://tu-dominio.com/ruta/al/archivo.apk")
 
         setContent {
@@ -185,6 +185,9 @@ class MainActivity : ComponentActivity() {
                 connection.requestMethod = "GET"
                 connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
                 connection.connectTimeout = 5000 // 5 segundos de tiempo de espera
+
+                val codigo = connection.responseCode
+                Log.d("Depuracion", "Código HTTP devuelto: $codigo")
 
                 if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                     // 1. Leemos el JSON de respuesta

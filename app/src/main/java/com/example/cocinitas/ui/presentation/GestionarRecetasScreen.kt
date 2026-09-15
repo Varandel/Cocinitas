@@ -30,10 +30,6 @@ fun GestionarRecetasScreen(
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    /**
-     * Este metodo hace posible el eliminar o editar los campos de una receta ya creada previamente,
-     * dependiendo de los parámetros que se proporcionen.
-     */
     val context = LocalContext.current
     val recetas by viewModel.recetas.collectAsState()
     var recetaParaEliminar by remember { mutableStateOf<Receta?>(null) }
@@ -41,7 +37,7 @@ fun GestionarRecetasScreen(
 
     Scaffold(
         modifier = modifier,
-        containerColor = Color.Transparent, // 1. Fondo transparente
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(titulo, fontWeight = FontWeight.Bold) },
@@ -50,9 +46,7 @@ fun GestionarRecetasScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent // 2. Barra de título transparente
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { innerPadding ->
@@ -77,7 +71,7 @@ fun GestionarRecetasScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
-                items(recetas, key = { it.idReceta }) { receta ->
+                items(recetas, key = { it.nombre }) { receta ->
                     ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
@@ -91,12 +85,12 @@ fun GestionarRecetasScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "#${receta.idReceta} - ${receta.nombre}",
+                                    text = receta.nombre,
                                     fontWeight = FontWeight.Bold,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = "${receta.tipoComida} • ${receta.ingredientes.size} ingredientes",
+                                    text = "${receta.tiposComida.joinToString { it.name }} • ${receta.ingredientes.size} ingredientes",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -126,16 +120,16 @@ fun GestionarRecetasScreen(
             }
         }
 
-        // Diálogo modal de confirmación para borrado seguro
         recetaParaEliminar?.let { receta ->
+            val nombreLimpio = receta.nombre.replace(" ", "_").lowercase()
             AlertDialog(
                 onDismissRequest = { recetaParaEliminar = null },
                 title = { Text("¿Eliminar receta?") },
-                text = { Text("Se eliminará definitivamente el archivo receta_${receta.idReceta}.json de la receta \"${receta.nombre}\".") },
+                text = { Text("Se eliminará definitivamente el archivo receta_$nombreLimpio.json de la receta \"${receta.nombre}\".") },
                 confirmButton = {
                     Button(
                         onClick = {
-                            val exito = viewModel.eliminarReceta(receta.idReceta)
+                            val exito = viewModel.eliminarReceta(receta.nombre)
                             if (exito) {
                                 Toast.makeText(context, "Receta eliminada de disco", Toast.LENGTH_SHORT).show()
                             } else {

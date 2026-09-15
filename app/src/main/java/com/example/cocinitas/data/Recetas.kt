@@ -12,31 +12,30 @@ enum class TipoComida {
 data class MedidaIngrediente(
     @SerialName("Volumen (en mL)") val volumenMl: Double? = null,
     @SerialName("Masa (en gramos)") val masaGramos: Double? = null,
-    @SerialName("Cantidad") val cantidad: Double? = null
+    @SerialName("Cantidad") val cantidad: Int? = null,
+    @SerialName("Otro") val textoLibre: String? = null
 )
 
 @Serializable
 data class Ingrediente(
     @SerialName("Nombre") val nombre: String,
-    // Como tu esquema define los valores dentro del nombre o como propiedades de medida:
     val medidas: MedidaIngrediente
 )
 
 @Serializable
 data class Receta(
-    @SerialName("id_Receta") val idReceta: Int,
     @SerialName("Nombre") val nombre: String,
     @SerialName("Tipo Alimentos") val tipoAlimentos: List<String>,
     @SerialName("Pasos Receta") val pasosReceta: List<String>,
     @SerialName("Ingredientes") val ingredientes: List<Ingrediente>,
-    @SerialName("Tipo Comida") val tipoComida: TipoComida
+    @SerialName("Tipos Comida") val tiposComida: List<TipoComida>
 )
-
 
 enum class UnidadMedida(val label: String) {
     VOLUMEN("Volumen (en mL)"),
     MASA("Masa (en gramos)"),
-    CANTIDAD("Cantidad")
+    CANTIDAD("Cantidad"),
+    OTRO("Otro")
 }
 
 fun formatearMedida(ingrediente: Ingrediente): String {
@@ -45,6 +44,7 @@ fun formatearMedida(ingrediente: Ingrediente): String {
         m.volumenMl != null -> "${m.volumenMl} mL"
         m.masaGramos != null -> "${m.masaGramos} g"
         m.cantidad != null -> "${m.cantidad} uds"
+        m.textoLibre != null -> m.textoLibre
         else -> "Al gusto"
     }
 }

@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.cocinitas"
         minSdk = 23
         targetSdk = 37
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 3
+        versionName = "2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
